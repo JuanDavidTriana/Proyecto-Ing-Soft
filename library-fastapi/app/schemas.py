@@ -20,6 +20,7 @@ class UsuarioOut(BaseModel):
 
     id: int
     username: str
+    rol: str
     # Nunca se expone el password_hash en las respuestas
 
 
@@ -28,6 +29,29 @@ class UsuarioPage(BaseModel):
     skip: int
     limit: int
     items: List[UsuarioOut]
+
+
+# ---------- Auth (JWT) ----------
+
+class TokenOut(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+
+class RegistroRequest(BaseModel):
+    """Registro público: cualquiera puede crear su cuenta, pero SIEMPRE
+    queda con rol USER. El rol no se recibe del cliente para evitar que
+    alguien se auto-asigne ADMIN."""
+
+    username: str = Field(min_length=3, max_length=50)
+    password: str = Field(min_length=4, max_length=100)
+
+
+class RolUpdate(BaseModel):
+    """Solo un ADMIN puede usar esto (ver /usuarios/{id}/rol) para
+    ascender o degradar a otro usuario."""
+
+    rol: str = Field(pattern="^(ADMIN|USER)$")
 
 
 # ---------- Libro ----------

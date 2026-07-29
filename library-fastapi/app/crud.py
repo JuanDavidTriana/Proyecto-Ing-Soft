@@ -32,15 +32,22 @@ def get_usuarios(db: Session, skip: int = 0, limit: int = 10):
     return total, items
 
 
-def create_usuario(db: Session, usuario: schemas.UsuarioCreate) -> models.Usuario:
+def create_usuario(
+    db: Session, usuario: schemas.UsuarioCreate, rol: str = models.ROL_USER
+) -> models.Usuario:
     db_usuario = models.Usuario(
         username=usuario.username,
         password_hash=hash_password(usuario.password),
+        rol=rol,
     )
     db.add(db_usuario)
     db.commit()
     db.refresh(db_usuario)
     return db_usuario
+
+
+def verificar_password(password_plano: str, password_hash: str) -> bool:
+    return pwd_context.verify(password_plano, password_hash)
 
 
 def update_usuario(

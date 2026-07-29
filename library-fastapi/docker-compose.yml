@@ -74,6 +74,12 @@ services:
     # resuelve automáticamente como si fuera un DNS interno.
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/biblioteca
+      # Nuevo: configuración de JWT (ver app/security.py). En un proyecto
+      # real, JWT_SECRET_KEY debería venir de un secreto/gestor externo,
+      # nunca quedar hardcodeado en el compose subido a git.
+      JWT_SECRET_KEY: cambia-esta-clave-por-una-larga-y-aleatoria
+      JWT_ALGORITHM: HS256
+      JWT_EXPIRE_MINUTES: "60"
 
     # Publicamos el puerto 8000 del contenedor en el 8000 de tu máquina.
     # Así puedes entrar a http://localhost:8000/docs desde tu navegador.

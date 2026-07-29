@@ -1,8 +1,10 @@
 package com.biblioteca.libraryspring.controller;
 
+import com.biblioteca.libraryspring.dto.RolUpdateRequest;
 import com.biblioteca.libraryspring.dto.UsuarioRequest;
 import com.biblioteca.libraryspring.dto.UsuarioResponse;
 import com.biblioteca.libraryspring.dto.UsuarioUpdateRequest;
+import com.biblioteca.libraryspring.model.Rol;
 import com.biblioteca.libraryspring.model.Usuario;
 import com.biblioteca.libraryspring.repository.UsuarioRepository;
 import jakarta.validation.Valid;
@@ -14,6 +16,15 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+/**
+ * Quién puede llamar cada endpoint NO se decide aquí, sino de forma
+ * centralizada en security/SecurityConfig.java:
+ *   - GET  /usuarios/**  -> ADMIN o USER (cualquiera autenticado)
+ *   - POST/PUT/DELETE /usuarios/** -> solo ADMIN
+ * Si alguien sin el rol correcto llama a estos endpoints, Spring
+ * Security corta la petición con 403 ANTES de que este código se
+ * ejecute.
+ */
 @RestController
 @RequestMapping("/usuarios")
 public class UsuarioController {
@@ -29,10 +40,12 @@ public class UsuarioController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public UsuarioResponse crear(@Valid @RequestBody UsuarioRequest request) {
+        // Creado por un ADMIN: entra como USER por defecto. Para dejarlo
+        // como ADMIN, usar después PUT /usuarios/{id}/rol.
         usuarioRepository.findByUsername(request.getUsername()).ifPresent(u -> {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El username ya existe");
         });
-        Usuario usuario = new Usuario(request.getUsername(), passwordEncoder.encode(request.getPassword()));
+        Usuario usuario = new Usuario(request.getUsername(), passwordEncoder.encode(request.getPassword()), Rol.USER);
         return new UsuarioResponse(usuarioRepository.save(usuario));
     }
 
@@ -63,6 +76,17 @@ public class UsuarioController {
         if (request.getPassword() != null) {
             usuario.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         }
+        return new UsuarioResponse(usuarioRepository.save(usuario));
+    }
+
+    @PutMapping("/{id}/rol")
+    public UsuarioResponse cambiarRol(@PathVariable Long id, @Valid @RequestBody RolUpdateRequest request) {
+        // Endpoint dedicado (en vez de meterlo en actualizar()) para que
+        // el cambio de rol sea explícito y fácil de auditar/loggear en
+        // un proyecto real.
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+        usuario.setRol(request.getRol());
         return new UsuarioResponse(usuarioRepository.save(usuario));
     }
 

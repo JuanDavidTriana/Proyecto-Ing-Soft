@@ -12,6 +12,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+/**
+ * Igual que en UsuarioController: la autorización por rol se decide de
+ * forma centralizada en security/SecurityConfig.java, no aquí:
+ *   - GET  /libros/**  -> ADMIN o USER
+ *   - POST/PUT/DELETE /libros/** -> solo ADMIN
+ */
 @RestController
 @RequestMapping("/libros")
 public class LibroController {

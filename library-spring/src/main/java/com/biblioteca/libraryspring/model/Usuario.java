@@ -2,6 +2,8 @@ package com.biblioteca.libraryspring.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -21,12 +23,28 @@ public class Usuario {
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
+    // Nuevo: rol del usuario. @Enumerated(EnumType.STRING) guarda el
+    // nombre del enum ("ADMIN"/"USER") en la columna, en vez de un
+    // número (EnumType.ORDINAL), que es frágil si el orden del enum
+    // cambia. Todo usuario nuevo entra como USER; el primer ADMIN se
+    // crea manualmente en la base de datos (ver AUTH.md).
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private Rol rol = Rol.USER;
+
     public Usuario() {
     }
 
     public Usuario(String username, String passwordHash) {
         this.username = username;
         this.passwordHash = passwordHash;
+        this.rol = Rol.USER;
+    }
+
+    public Usuario(String username, String passwordHash, Rol rol) {
+        this.username = username;
+        this.passwordHash = passwordHash;
+        this.rol = rol;
     }
 
     public Long getId() {
@@ -51,5 +69,13 @@ public class Usuario {
 
     public void setPasswordHash(String passwordHash) {
         this.passwordHash = passwordHash;
+    }
+
+    public Rol getRol() {
+        return rol;
+    }
+
+    public void setRol(Rol rol) {
+        this.rol = rol;
     }
 }

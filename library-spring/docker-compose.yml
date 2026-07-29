@@ -53,6 +53,11 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/biblioteca
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
+      # Nuevo: configuración de JWT (Spring mapea JWT_SECRET ->
+      # jwt.secret automáticamente). En un proyecto real este valor no
+      # debería quedar hardcodeado en el compose subido a git.
+      JWT_SECRET: cambia-esta-clave-por-una-muy-larga-y-aleatoria-1234567890
+      JWT_EXPIRATION_MS: "3600000"
 
     ports:
       - "8080:8080"
