@@ -1,0 +1,67 @@
+# =============================================================================
+# docker-compose.yml - Biblioteca API (Spring Boot) + PostgreSQL
+# =============================================================================
+# Igual que en el proyecto de FastAPI: Compose levanta la API y la base
+# de datos juntas, en la misma red interna, con un solo comando:
+#   docker compose up
+# =============================================================================
+
+services:
+
+  # ---------------------------------------------------------------------
+  # Servicio de la base de datos (idéntico en espíritu al de FastAPI)
+  # ---------------------------------------------------------------------
+  db:
+    image: postgres:16-alpine
+    container_name: biblioteca_db_spring
+
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: biblioteca
+
+    # Volumen para que los datos sobrevivan a un "docker compose down".
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+    ports:
+      - "5432:5432"
+
+    # Docker espera este chequeo antes de considerar que "db" ya está lista.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------------------------------------------------------
+  # Servicio de la API (Spring Boot)
+  # ---------------------------------------------------------------------
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: biblioteca_api_spring
+
+    # Spring Boot lee estas variables y SOBRESCRIBE lo que esté en
+    # application.properties (Spring las mapea automáticamente:
+    # SPRING_DATASOURCE_URL -> spring.datasource.url, etc.).
+    # Igual que en FastAPI, el host de la base de datos es "db"
+    # (el nombre del servicio), no "localhost".
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/biblioteca
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+
+    ports:
+      - "8080:8080"
+
+    # La API no arranca hasta que el healthcheck de "db" pase, evitando
+    # errores de conexión al levantar todo por primera vez.
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db_data:

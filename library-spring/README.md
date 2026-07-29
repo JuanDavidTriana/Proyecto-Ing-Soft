@@ -27,6 +27,15 @@ mvn spring-boot:run
 
 La app corre en http://localhost:8080
 
+## Ejecutar con Docker
+
+```bash
+docker compose up --build
+```
+
+Ver la guía completa (conceptos, comandos, troubleshooting) en
+[`../DOCKER.md`](../DOCKER.md).
+
 ## Endpoints
 
 - `POST   /usuarios`             crear usuario

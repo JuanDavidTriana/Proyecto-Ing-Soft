@@ -1,0 +1,12 @@
+# Archivos y carpetas que Docker NO debe copiar al contexto de build.
+# Esto acelera el build (menos datos que enviar al daemon de Docker)
+# y evita meter basura o secretos dentro de la imagen final.
+
+__pycache__/
+*.pyc
+venv/
+.venv/
+.env
+.git/
+.gitignore
+README.md

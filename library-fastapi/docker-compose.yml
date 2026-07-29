@@ -1,0 +1,103 @@
+# =============================================================================
+# docker-compose.yml - Biblioteca API (FastAPI) + PostgreSQL
+# =============================================================================
+# Docker Compose sirve para levantar VARIOS contenedores a la vez (en este
+# caso: la API y su base de datos) y que puedan hablar entre sí, con un
+# solo comando: `docker compose up`.
+#
+# Cada bloque bajo "services:" es un contenedor distinto. Compose crea
+# automáticamente una red interna donde cada servicio puede llamar a otro
+# usando su NOMBRE como si fuera un hostname (por ejemplo, la API se
+# conecta a "db", no a "localhost").
+# =============================================================================
+
+services:
+
+  # ---------------------------------------------------------------------
+  # Servicio de la base de datos
+  # ---------------------------------------------------------------------
+  db:
+    # Usamos la imagen oficial de Postgres, versión 16, en su variante
+    # "alpine" (más liviana). No necesitamos un Dockerfile para esto:
+    # Docker la descarga directo de Docker Hub.
+    image: postgres:16-alpine
+
+    # Nombre fijo del contenedor (más fácil de identificar con `docker ps`).
+    container_name: biblioteca_db
+
+    # Variables de entorno que la imagen oficial de Postgres usa para
+    # crear automáticamente el usuario, contraseña y base de datos
+    # la primera vez que arranca.
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: biblioteca
+
+    # Un volumen es un espacio de almacenamiento que vive FUERA del
+    # contenedor y persiste aunque el contenedor se borre. Sin esto,
+    # cada vez que reconstruyas el contenedor perderías todos los datos.
+    # "db_data" (definido más abajo en "volumes:") se monta en la ruta
+    # donde Postgres guarda sus archivos internos.
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+    # Publicamos el puerto 5432 del contenedor en el 5432 de tu máquina,
+    # por si quieres conectarte con un cliente (DBeaver, psql, etc.)
+    # directo desde tu computador.
+    ports:
+      - "5432:5432"
+
+    # Healthcheck: Docker verifica periódicamente que Postgres ya está
+    # listo para aceptar conexiones. Lo usamos abajo para que la API
+    # espere a que la base de datos esté realmente lista antes de arrancar.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------------------------------------------------------
+  # Servicio de la API (nuestra aplicación FastAPI)
+  # ---------------------------------------------------------------------
+  api:
+    # En vez de "image", usamos "build" porque este servicio SÍ lo
+    # construimos nosotros a partir del Dockerfile de esta misma carpeta.
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: biblioteca_api
+
+    # DATABASE_URL le dice a SQLAlchemy cómo conectarse a Postgres.
+    # OJO: el host es "db", no "localhost". Dentro de la red de Compose,
+    # "db" es el nombre del OTRO servicio definido arriba, y Docker lo
+    # resuelve automáticamente como si fuera un DNS interno.
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/biblioteca
+
+    # Publicamos el puerto 8000 del contenedor en el 8000 de tu máquina.
+    # Así puedes entrar a http://localhost:8000/docs desde tu navegador.
+    ports:
+      - "8000:8000"
+
+    # depends_on con "condition: service_healthy" hace que el contenedor
+    # de la API no arranque hasta que el healthcheck de "db" pase.
+    # Esto evita errores de "conexión rechazada" al iniciar todo junto.
+    depends_on:
+      db:
+        condition: service_healthy
+
+    # Volumen opcional para desarrollo: monta tu carpeta local "app/"
+    # dentro del contenedor, así los cambios de código se reflejan sin
+    # tener que reconstruir la imagen. Coméntalo si solo quieres probar
+    # la imagen "congelada" tal como quedaría en producción.
+    volumes:
+      - ./app:/app/app
+
+# ---------------------------------------------------------------------
+# Definición de volúmenes nombrados usados arriba.
+# Docker los administra y los guarda en el disco del host, fuera del
+# ciclo de vida de los contenedores.
+# ---------------------------------------------------------------------
+volumes:
+  db_data:
