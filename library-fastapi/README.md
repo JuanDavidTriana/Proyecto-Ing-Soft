@@ -46,6 +46,14 @@ header `Authorization: Bearer <token>`, excepto `/auth/registro` y
 `/auth/login`. Ver la explicación completa (cómo funciona el flujo, cómo
 crear el primer ADMIN, ejemplos con curl) en [`../AUTH.md`](../AUTH.md).
 
+## Paginación e IDs (UUID)
+
+El `id` de `Libro` es un UUID (no un entero autoincremental). Las listas
+paginadas (`GET /usuarios/`, `GET /libros/`) devuelven, además de
+`items`, la metadata `total_paginas`, `pagina_actual`, `hay_siguiente` y
+`hay_anterior`. Ver el por qué de ambas decisiones en
+[`../PAGINACION_UUID.md`](../PAGINACION_UUID.md).
+
 ## Endpoints
 
 **Auth (públicos)**
@@ -60,7 +68,7 @@ crear el primer ADMIN, ejemplos con curl) en [`../AUTH.md`](../AUTH.md).
 - `PUT    /usuarios/{id}/rol`     cambiar rol (ADMIN)
 - `DELETE /usuarios/{id}`         eliminar (ADMIN)
 
-**Libros** (requiere token; ADMIN salvo que se indique)
+**Libros** (requiere token; ADMIN salvo que se indique; `{id}` es un UUID)
 - `POST   /libros/`             crear (ADMIN)
 - `GET    /libros/?skip=0&limit=10`  listar (ADMIN o USER)
 - `GET    /libros/{id}`         obtener uno (ADMIN o USER)

@@ -53,6 +53,11 @@ public class UsuarioController {
     public Page<UsuarioResponse> listar(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
+        // Page<> ya serializa a JSON con toda la metadata de paginación
+        // (totalPages, totalElements, first, last, numberOfElements,
+        // etc.), sin que tengamos que calcular nada a mano — a
+        // diferencia de FastAPI, donde esa metadata se arma con
+        // app/pagination.py. Ver ../../../../../../PAGINACION_UUID.md.
         return usuarioRepository
                 .findAll(PageRequest.of(page, size, Sort.by("id")))
                 .map(UsuarioResponse::new);

@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from .. import crud, models, schemas
 from ..database import get_db
+from ..pagination import calcular_metadata_paginacion
 from ..security import requerir_rol
 
 router = APIRouter(prefix="/usuarios", tags=["usuarios"])
@@ -40,7 +41,8 @@ def listar_usuarios(
 ):
     """Cualquier usuario autenticado (ADMIN o USER) puede listar."""
     total, items = crud.get_usuarios(db, skip=skip, limit=limit)
-    return schemas.UsuarioPage(total=total, skip=skip, limit=limit, items=items)
+    metadata = calcular_metadata_paginacion(total=total, skip=skip, limit=limit)
+    return schemas.UsuarioPage(total=total, skip=skip, limit=limit, items=items, **metadata)
 
 
 @router.get(

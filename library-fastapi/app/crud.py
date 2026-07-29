@@ -1,3 +1,5 @@
+import uuid
+
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
@@ -69,7 +71,7 @@ def delete_usuario(db: Session, db_usuario: models.Usuario) -> None:
 
 # ---------- Libro ----------
 
-def get_libro(db: Session, libro_id: int) -> models.Libro | None:
+def get_libro(db: Session, libro_id: uuid.UUID) -> models.Libro | None:
     return db.query(models.Libro).filter(models.Libro.id == libro_id).first()
 
 

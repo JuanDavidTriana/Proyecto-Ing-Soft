@@ -43,6 +43,14 @@ header `Authorization: Bearer <token>`, excepto `/auth/registro` y
 `/auth/login`. Ver la explicación completa (cómo funciona el flujo, cómo
 crear el primer ADMIN, ejemplos con curl) en [`../AUTH.md`](../AUTH.md).
 
+## Paginación e IDs (UUID)
+
+El `id` de `Libro` es un UUID (no un `Long` autoincremental). Las listas
+paginadas (`GET /usuarios`, `GET /libros`) ya devuelven toda la metadata
+de paginación de Spring Data (`totalPages`, `totalElements`, `first`,
+`last`, etc.) sin código extra. Ver el por qué de ambas decisiones en
+[`../PAGINACION_UUID.md`](../PAGINACION_UUID.md).
+
 ## Endpoints
 
 **Auth (públicos)**
@@ -57,7 +65,7 @@ crear el primer ADMIN, ejemplos con curl) en [`../AUTH.md`](../AUTH.md).
 - `PUT    /usuarios/{id}/rol`    cambiar rol (ADMIN)
 - `DELETE /usuarios/{id}`        eliminar (ADMIN)
 
-**Libros** (requiere token; ADMIN salvo que se indique)
+**Libros** (requiere token; ADMIN salvo que se indique; `{id}` es un UUID)
 - `POST   /libros`             crear (ADMIN)
 - `GET    /libros?page=0&size=10`  listar (ADMIN o USER)
 - `GET    /libros/{id}`        obtener uno (ADMIN o USER)

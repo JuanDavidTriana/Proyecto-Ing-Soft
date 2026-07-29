@@ -1,3 +1,4 @@
+import uuid
 from typing import List
 
 from pydantic import BaseModel, Field, ConfigDict
@@ -28,6 +29,12 @@ class UsuarioPage(BaseModel):
     total: int
     skip: int
     limit: int
+    # Metadata calculada por app/pagination.py: le ahorra al cliente
+    # tener que hacer estas cuentas él mismo (total//limit, etc.).
+    total_paginas: int
+    pagina_actual: int
+    hay_siguiente: bool
+    hay_anterior: bool
     items: List[UsuarioOut]
 
 
@@ -77,11 +84,17 @@ class LibroUpdate(BaseModel):
 class LibroOut(LibroBase):
     model_config = ConfigDict(from_attributes=True)
 
-    id: int
+    # Nuevo: id UUID en vez de int. Pydantic serializa uuid.UUID como el
+    # string estándar con guiones, ej: "3fa85f64-5717-4562-b3fc-2c963f66afa6".
+    id: uuid.UUID
 
 
 class LibroPage(BaseModel):
     total: int
     skip: int
     limit: int
+    total_paginas: int
+    pagina_actual: int
+    hay_siguiente: bool
+    hay_anterior: bool
     items: List[LibroOut]

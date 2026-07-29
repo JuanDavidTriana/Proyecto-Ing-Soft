@@ -1,8 +1,11 @@
+import uuid
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from .. import crud, models, schemas
 from ..database import get_db
+from ..pagination import calcular_metadata_paginacion
 from ..security import requerir_rol
 
 router = APIRouter(prefix="/libros", tags=["libros"])
@@ -10,6 +13,10 @@ router = APIRouter(prefix="/libros", tags=["libros"])
 # Regla de negocio para este router:
 # - Leer catálogo (GET): cualquier usuario autenticado (ADMIN o USER).
 # - Modificar catálogo (POST/PUT/DELETE): solo ADMIN.
+#
+# Nuevo: el id de Libro es un UUID (ver models.py y PAGINACION_UUID.md).
+# FastAPI valida automáticamente que "{libro_id}" venga con formato de
+# UUID válido; si no, responde 422 sin que este código se ejecute.
 
 
 @router.post(
@@ -35,7 +42,8 @@ def listar_libros(
     db: Session = Depends(get_db),
 ):
     total, items = crud.get_libros(db, skip=skip, limit=limit)
-    return schemas.LibroPage(total=total, skip=skip, limit=limit, items=items)
+    metadata = calcular_metadata_paginacion(total=total, skip=skip, limit=limit)
+    return schemas.LibroPage(total=total, skip=skip, limit=limit, items=items, **metadata)
 
 
 @router.get(
@@ -43,7 +51,7 @@ def listar_libros(
     response_model=schemas.LibroOut,
     dependencies=[Depends(requerir_rol(models.ROL_ADMIN, models.ROL_USER))],
 )
-def obtener_libro(libro_id: int, db: Session = Depends(get_db)):
+def obtener_libro(libro_id: uuid.UUID, db: Session = Depends(get_db)):
     db_libro = crud.get_libro(db, libro_id)
     if not db_libro:
         raise HTTPException(status_code=404, detail="Libro no encontrado")
@@ -56,7 +64,7 @@ def obtener_libro(libro_id: int, db: Session = Depends(get_db)):
     dependencies=[Depends(requerir_rol(models.ROL_ADMIN))],
 )
 def actualizar_libro(
-    libro_id: int, cambios: schemas.LibroUpdate, db: Session = Depends(get_db)
+    libro_id: uuid.UUID, cambios: schemas.LibroUpdate, db: Session = Depends(get_db)
 ):
     db_libro = crud.get_libro(db, libro_id)
     if not db_libro:
@@ -69,7 +77,7 @@ def actualizar_libro(
     status_code=204,
     dependencies=[Depends(requerir_rol(models.ROL_ADMIN))],
 )
-def eliminar_libro(libro_id: int, db: Session = Depends(get_db)):
+def eliminar_libro(libro_id: uuid.UUID, db: Session = Depends(get_db)):
     db_libro = crud.get_libro(db, libro_id)
     if not db_libro:
         raise HTTPException(status_code=404, detail="Libro no encontrado")
